@@ -1,0 +1,187 @@
+{
+  "name": "Olis.insights — Auto Publisher",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 6 * * *" }]
+        }
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Täglich 08:00 Uhr",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://raw.githubusercontent.com/olisinsights/olis-assets/main/calendar.json",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0002-0002-0002-000000000002",
+      "name": "calendar.json laden",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cal = $input.first().json;\nconst now = new Date();\n\nconst due = (cal.posts || []).filter(p =>\n  p.status === 'approved' &&\n  new Date(p.scheduled_at) <= now\n);\n\nif (due.length === 0) {\n  console.log('Keine fälligen Posts.');\n  return [];\n}\n\nconsole.log(`${due.length} Post(s) fällig.`);\nreturn due.map(p => ({ json: p }));"
+      },
+      "id": "a1b2c3d4-0003-0003-0003-000000000003",
+      "name": "Fällige Posts filtern",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v22.0/17841417705439127/media",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "image_url", "value": "={{ $json.media[0] }}" },
+            { "name": "caption",   "value": "={{ $json.caption }}" },
+            { "name": "access_token", "value": "={{ $vars.IG_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0004-0004-0004-000000000004",
+      "name": "IG Container erstellen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "amount": 20
+      },
+      "id": "a1b2c3d4-0005-0005-0005-000000000005",
+      "name": "20s warten",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1120, 300],
+      "webhookId": "olis-wait-ig"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v22.0/17841417705439127/media_publish",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "creation_id",  "value": "={{ $('IG Container erstellen').item.json.id }}" },
+            { "name": "access_token", "value": "={{ $vars.IG_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0006-0006-0006-000000000006",
+      "name": "IG veröffentlichen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v22.0/1139837045885302/photos",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "url",          "value": "={{ $('Fällige Posts filtern').item.json.media[0] }}" },
+            { "name": "caption",      "value": "={{ $('Fällige Posts filtern').item.json.caption }}" },
+            { "name": "access_token", "value": "={{ $vars.IG_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0007-0007-0007-000000000007",
+      "name": "Facebook posten",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aktuellen Stand von calendar.json holen\nconst postId = $('Fällige Posts filtern').item.json.id;\nconst igPostId = $('IG veröffentlichen').item.json.id;\n\n// Wir geben die Info weiter für den GitHub-Update\nreturn [{ json: { postId, igPostId, postedAt: new Date().toISOString() } }];"
+      },
+      "id": "a1b2c3d4-0008-0008-0008-000000000008",
+      "name": "Post-Info sammeln",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/olisinsights/olis-assets/contents/calendar.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ 'Bearer ' + $vars.GITHUB_TOKEN }}" },
+            { "name": "Accept", "value": "application/vnd.github.v3+json" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0009-0009-0009-000000000009",
+      "name": "GitHub Datei holen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const githubFile = $('GitHub Datei holen').item.json;\nconst sha = githubFile.sha;\n\n// Inhalt dekodieren\nconst content = JSON.parse(Buffer.from(githubFile.content.replace(/\\n/g, ''), 'base64').toString('utf8'));\n\n// Post aktualisieren\nconst postId  = $('Post-Info sammeln').item.json.postId;\nconst igPostId = $('Post-Info sammeln').item.json.igPostId;\nconst postedAt = $('Post-Info sammeln').item.json.postedAt;\n\ncontent.posts = content.posts.map(p => {\n  if (p.id === postId) {\n    return { ...p, status: 'posted', ig_post_id: igPostId, posted_at: postedAt, error: null };\n  }\n  return p;\n});\n\n// Neu kodieren\nconst updatedContent = Buffer.from(JSON.stringify(content, null, 2), 'utf8').toString('base64');\n\nreturn [{ json: { sha, updatedContent, postId } }];"
+      },
+      "id": "a1b2c3d4-0010-0010-0010-000000000010",
+      "name": "calendar.json updaten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 300]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "https://api.github.com/repos/olisinsights/olis-assets/contents/calendar.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ 'Bearer ' + $vars.GITHUB_TOKEN }}" },
+            { "name": "Accept", "value": "application/vnd.github.v3+json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"update: {{ $json.postId }} gepostet\",\n  \"content\": \"{{ $json.updatedContent }}\",\n  \"sha\": \"{{ $json.sha }}\"\n}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0011-0011-0011-000000000011",
+      "name": "GitHub speichern",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2440, 300]
+    }
+  ],
+  "connections": {
+    "Täglich 08:00 Uhr":   { "main": [[{ "node": "calendar.json laden",    "type": "main", "index": 0 }]] },
+    "calendar.json laden":  { "main": [[{ "node": "Fällige Posts filtern",  "type": "main", "index": 0 }]] },
+    "Fällige Posts filtern":{ "main": [[{ "node": "IG Container erstellen", "type": "main", "index": 0 }]] },
+    "IG Container erstellen":{ "main": [[{ "node": "20s warten",            "type": "main", "index": 0 }]] },
+    "20s warten":           { "main": [[{ "node": "IG veröffentlichen",     "type": "main", "index": 0 }]] },
+    "IG veröffentlichen":   { "main": [[{ "node": "Facebook posten",        "type": "main", "index": 0 }]] },
+    "Facebook posten":      { "main": [[{ "node": "Post-Info sammeln",      "type": "main", "index": 0 }]] },
+    "Post-Info sammeln":    { "main": [[{ "node": "GitHub Datei holen",     "type": "main", "index": 0 }]] },
+    "GitHub Datei holen":   { "main": [[{ "node": "calendar.json updaten",  "type": "main", "index": 0 }]] },
+    "calendar.json updaten":{ "main": [[{ "node": "GitHub speichern",       "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": []
+}
