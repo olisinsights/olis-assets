@@ -1,0 +1,48 @@
+{
+  "posts": [
+    {
+      "id": "post-001",
+      "status": "posted",
+      "type": "IMAGE",
+      "scheduled_at": "2026-06-26T20:00:00+02:00",
+      "caption": "Hast du heute schon 5 Minuten nur für dich gehabt?\n\nAls Vater läuft man schnell auf Reserve – und merkt es erst, wenn man am Abend einfach nichts mehr geben kann.\n\nMein Tipp: Morgens 5 Minuten vor allen anderen aufstehen. Kaffee. Stille. Kein Handy. Klingt wenig – verändert alles.\n\nWas ist deine Me-Time-Routine? 👇\n\n#papaleben #vaetercommunity #familieundberuf #papablog #modernervater #worklifebalance #familienleben #alltagmitkindern",
+      "media": [
+        "https://raw.githubusercontent.com/olisinsights/olis-assets/main/posts/post-001.png"
+      ],
+      "thumb_url": null,
+      "posted_at": "2026-06-27T02:00:55.6411534+02:00",
+      "ig_post_id": "17907024072263455",
+      "error": null
+    },
+    {
+      "id": "post-002",
+      "status": "draft",
+      "type": "CAROUSEL",
+      "scheduled_at": "2026-06-30T20:00:00+02:00",
+      "caption": "5 Dinge, die kein Erziehungsbuch dir sagt 📖\n\nAber jeder Vater irgendwann lernt – meistens auf die harte Tour.\n\nSlide durch und spar dir die Umwege. 👉\n\n#papaleben #vaetercommunity #papablog #erziehung #familienleben #reallifedad #modernervater #familieundberuf",
+      "media": [
+        "https://raw.githubusercontent.com/olisinsights/olis-assets/main/posts/post-002-slide1.jpg",
+        "https://raw.githubusercontent.com/olisinsights/olis-assets/main/posts/post-002-slide2.jpg",
+        "https://raw.githubusercontent.com/olisinsights/olis-assets/main/posts/post-002-slide3.jpg"
+      ],
+      "thumb_url": null,
+      "posted_at": null,
+      "ig_post_id": null,
+      "error": null
+    },
+    {
+      "id": "post-003",
+      "status": "draft",
+      "type": "REEL",
+      "scheduled_at": "2026-07-02T19:00:00+02:00",
+      "caption": "POV: Du bist seit 6 Uhr auf – aber nicht für die Arbeit 😅\n\n#papaleben #realdad #familienleben #vaetercommunity #papablog #alltagmitkindern #modernervater",
+      "media": [
+        "https://raw.githubusercontent.com/olisinsights/olis-assets/main/posts/post-003.mp4"
+      ],
+      "thumb_url": null,
+      "posted_at": null,
+      "ig_post_id": null,
+      "error": null
+    }
+  ]
+}
